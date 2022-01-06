@@ -463,7 +463,7 @@ bot.on('callback_query', async (ctx) => {
 
     if (ctx.callbackQuery.data.match(/set_timeout(.*)/)) {
         const chat_details = ctx.callbackQuery.data.split('  ');
-        await getCurrentUserDetails(ctx, chat_details[1]);
+        await getCurrentUserDetails(ctx, chat_details[2]);
 
         updating_timeout = true;
         await ctx.editMessageText(`You're editing configuration of\n*${chat_details[1]} (${chat_details[2]})*\n\n➥ Send new timeout in seconds in reply.`, {
@@ -588,13 +588,13 @@ bot.on('message', async (ctx) => {
         const matches = regExp.exec(ctx.message.reply_to_message.text);
         const chat_id = matches[1];
 
-        await getCurrentUserDetails(ctx);
-
         await db.updateUserChatDataBy({ update_by: 'time_out', update_by_value: parseInt(time), user_id: ctx.from.id, chat_id: chat_id });
 
         currentUser.time_out = time;
         updating_timeout = false;
         hasUsersDetails = false; // refresh purpose
+        
+        await getCurrentUserDetails(ctx, chat_id);
 
         return await ctx.telegram.editMessageText(ctx.chat.id, ctx.message.reply_to_message.message_id, undefined, `Successfully Updated Timeout to ${time} seconds !!`, {
             parse_mode: 'markdown',
