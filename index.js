@@ -63,7 +63,7 @@ bot.help((ctx) => {
 bot.catch(async (err, ctx) => {
     console.log(`Ooops, encountered an error for ${ctx.updateType}`, err);
     const from_id = await func.getFromId(ctx);
-    ctx.telegram.sendMessage(from_id, `Ooops, encountered an error ${ctx.updateType}: ${err.description ? err.description : err}`);
+    await ctx.telegram.sendMessage(from_id, `Ooops, encountered an error ${ctx.updateType}: ${err.description ? err.description : err}`);
 });
 
 bot.use(async (ctx, next) => {
@@ -85,7 +85,7 @@ bot.use(async (ctx, next) => {
 async function startPrompt(ctx) {
     const method = ctx.message ? 'reply' : 'editMessageText';
 
-    ctx[method](`Hi *${ctx.from.first_name}*!!\n\nI can help you to delete messages from your Group/Channel after specific time.\n\n🤖️ Official private bot of @temp\\_demo`, {
+    await ctx[method](`Hi *${ctx.from.first_name}*!!\n\nI can help you to delete messages from your Group/Channel after specific time.\n\n🤖️ Official private bot of @temp\\_demo`, {
         parse_mode: 'markdown',
         reply_markup: {
             inline_keyboard: [
@@ -103,7 +103,7 @@ async function startPrompt(ctx) {
 async function helpPrompt(ctx) {
     const method = ctx.message ? 'reply' : 'editMessageText';
 
-    ctx[method](`\nJust add me in your Group/Channel as an admin and configure your prefernces by sending /add\\_connection in Group for Group and in bot for Channel.`, {
+    await ctx[method](`\nJust add me in your Group/Channel as an admin and configure your prefernces by sending /add\\_connection in Group for Group and in bot for Channel.`, {
         parse_mode: 'markdown',
         reply_markup: {
             inline_keyboard: [
@@ -169,7 +169,7 @@ async function showAllConnections(ctx) {
 
     const results = ctx.message ? await getUserDetails(ctx, true) : await usersDetails(ctx);
     if (results.length === 0) {
-        ctx.telegram.editMessageText(ctx.chat.id, (ctx.message ? message_id + 1 : message_id), undefined, '*There is no active connections\n\nConnect your Group/Channel first.*', {
+        await ctx.telegram.editMessageText(ctx.chat.id, (ctx.message ? message_id + 1 : message_id), undefined, '*There is no active connections\n\nConnect your Group/Channel first.*', {
             reply_to_message_id: message_id,
             parse_mode: 'markdown',
             reply_markup: {
@@ -194,7 +194,7 @@ async function showAllConnections(ctx) {
             )
         });
 
-        ctx.telegram.editMessageText(ctx.chat.id, (ctx.message ? message_id + 1 : message_id), undefined, `*Your all connections (${results.length})\n\nTap on disconnect to remove.*`, {
+        await ctx.telegram.editMessageText(ctx.chat.id, (ctx.message ? message_id + 1 : message_id), undefined, `*Your all connections (${results.length})\n\nTap on disconnect to remove.*`, {
             reply_to_message_id: message_id,
             parse_mode: 'markdown',
             reply_markup: {
@@ -246,9 +246,9 @@ async function deletetionDetails(ctx) {
     ];
 
     if (isEnabledOrDisabledQuery) {
-        ctx.editMessageReplyMarkup({ inline_keyboard: inline_keyboard })
+        await ctx.editMessageReplyMarkup({ inline_keyboard: inline_keyboard })
     } else {
-        ctx.editMessageText(`Current deletions criteria of *${current_chat_details.title}* are :`, {
+        await ctx.editMessageText(`Current deletions criteria of *${current_chat_details.title}* are :`, {
             parse_mode: 'markdown',
             reply_markup: {
                 inline_keyboard: inline_keyboard
@@ -370,7 +370,7 @@ bot.on('callback_query', async (ctx) => {
 
         await getCurrentUserDetails(ctx);
 
-        ctx.editMessageReplyMarkup({
+        await ctx.editMessageReplyMarkup({
             inline_keyboard: [
                 [
                     { text: "Check Time Left ⏰️ To Delete Message 🗑️", callback_data: 'checkTime' }
@@ -395,10 +395,10 @@ bot.on('callback_query', async (ctx) => {
                             }
                         });
                     } catch (error) {
-                        ctx.telegram.sendMessage(ctx.from.id, `Error In Bin Channel :\n\n${error.description ? error.description : error}`);
+                        await ctx.telegram.sendMessage(ctx.from.id, `Error In Bin Channel :\n\n${error.description ? error.description : error}`);
                     };
                 }
-                ctx.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message.message_id);
+                await ctx.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message.message_id);
                 await db.deleteUserDataByMsgId({ user_id: ctx.from.id, chat_id: ctx.chat.id, message_id: ctx.callbackQuery.message.message_id })
             }, Number(currentUser.time_out) * 1000);
         });
@@ -491,7 +491,7 @@ bot.on('callback_query', async (ctx) => {
 
 
 bot.command('add_connection', async (ctx) => {
-    ctx.reply('*Intializing....⏳️*', {
+    await ctx.reply('*Intializing....⏳️*', {
         parse_mode: 'markdown',
         reply_to_message_id: ctx.message.message_id
     });
@@ -508,7 +508,7 @@ bot.command('add_connection', async (ctx) => {
     const chat_type = ctx.message.chat.type === 'supergroup' ? 'supergroup' : 'channel';
     const additional_message = ctx.message.chat.type === 'supergroup' ? '➥ Reply Yes for confirmation & No for cancel the process' : '➥ Send me id of your channel (Ex: -100126256)';
 
-    ctx.telegram.editMessageText(ctx.chat.id, (ctx.message.message_id + 1), undefined, `➕️ First add me to your ${chat_type} as an *Admin*.\n\n${additional_message}`, {
+    await ctx.telegram.editMessageText(ctx.chat.id, (ctx.message.message_id + 1), undefined, `➕️ First add me to your ${chat_type} as an *Admin*.\n\n${additional_message}`, {
         parse_mode: 'markdown'
     });
 
@@ -518,7 +518,7 @@ bot.command('add_connection', async (ctx) => {
 bot.command('my_connections', async (ctx) => {
     if (ctx.chat.type !== 'private') {
         ctx.deleteMessage();
-        return ctx.telegram.sendMessage(ctx.from.id, 'Please change your chat configuration from here by\n/my\_connections command.')
+        return await ctx.telegram.sendMessage(ctx.from.id, 'Please change your chat configuration from here by\n/my\_connections command.')
     }
     await showAllConnections(ctx);
 });
@@ -535,7 +535,7 @@ bot.on('channel_post', async (ctx) => {
         time_out: currentUser.time_out
     };
 
-    ctx.telegram.editMessageReplyMarkup(ctx.channelPost.chat.id, ctx.channelPost.message_id, undefined, {
+    await ctx.telegram.editMessageReplyMarkup(ctx.channelPost.chat.id, ctx.channelPost.message_id, undefined, {
         inline_keyboard: [
             [
                 { text: "🗑️ Self Delete", callback_data: `auto_delete ${params.user_id} ${params.message_id} ${params.time_out}` },
@@ -562,7 +562,6 @@ bot.on('message', async (ctx) => {
         }
 
         const chat = await ctx.telegram.getChat(parseInt(isChannel ? ctx.message.text : ctx.chat.id));
-
         await db.addUserChatStatus({ user_id: ctx.from.id, chat_title: chat.title, chat_id: chat.id, chat_type: chat.type, time_out: 60, is_enabled: 1 });
 
         adding_connection = false;
@@ -581,7 +580,7 @@ bot.on('message', async (ctx) => {
         });
 
         const time = ctx.message.text;
-        if (!time) return ctx.telegram.editMessageText(ctx.chat.id, ctx.message.reply_to_message.message_id, undefined, `*Please enter valid time in seconds*`, {
+        if (!time) return await ctx.telegram.editMessageText(ctx.chat.id, ctx.message.reply_to_message.message_id, undefined, `*Please enter valid time in seconds*`, {
             parse_mode: 'markdown'
         });
 
@@ -594,7 +593,6 @@ bot.on('message', async (ctx) => {
         await db.updateUserChatDataBy({ update_by: 'time_out', update_by_value: parseInt(time), user_id: ctx.from.id, chat_id: chat_id });
 
         currentUser.time_out = time;
-
         updating_timeout = false;
         hasUsersDetails = false; // refresh purpose
 
@@ -617,7 +615,7 @@ bot.on('message', async (ctx) => {
     const updateSubTypes = ['text', 'photo', 'video'];
     if (updateSubTypes.indexOf(ctx.updateSubTypes[0]) < 0) return;
 
-    if (ctx.chat.type === 'private') return ctx.reply('Use this feature in any Group/Channel after completion of setup not here.')
+    if (ctx.chat.type === 'private') return await ctx.reply('Use this feature in any Group/Channel after completion of setup not here.')
 
     await getCurrentUserDetails(ctx);
     if (!currentUser.is_enabled) return;
@@ -638,7 +636,7 @@ bot.on('message', async (ctx) => {
             ]
         }
     });
-    ctx.deleteMessage();
+    await ctx.deleteMessage();
 });
 
 bot.launch();
