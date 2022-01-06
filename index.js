@@ -469,7 +469,7 @@ bot.on('callback_query', async (ctx) => {
         updating_timeout = true;
         const current_chat_details = await ctx.telegram.getChat(parseInt(chat_details[1]));
         
-        await ctx.editMessageText(`You're editing configuration of\n*${current_chat_details.title} (${chat_details[2]})*\n\n➥ Send new timeout in seconds in reply.`, {
+        await ctx.editMessageText(`You're editing configuration of\n*${current_chat_details.title} (${current_chat_details.id})*\n\n➥ Send new timeout in seconds in reply.`, {
             parse_mode: 'markdown',
             reply_markup: {
                 inline_keyboard: [
