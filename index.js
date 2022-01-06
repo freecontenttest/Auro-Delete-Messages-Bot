@@ -159,7 +159,7 @@ async function usersDetails(ctx) {
 
 async function showAllConnections(ctx) {
     if (ctx.message) {
-        ctx.reply('*Fetching Data....⏳️*', {
+        await ctx.reply('*Fetching Data....⏳️*', {
             parse_mode: 'markdown',
             reply_to_message_id: ctx.message.message_id
         });
