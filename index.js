@@ -189,7 +189,7 @@ async function showAllConnections(ctx) {
             inline_keyboard.push(
                 [
                     { text: ele.chat_title, callback_data: `show_chat_details  ${ele.is_enabled}  ${ele.chat_id}  ${ele.time_out}` },
-                    { text: 'Disconnect ️❌️', callback_data: `disconnect  ${ele.chat_id}  ${ele.chat_title}` }
+                    { text: 'Disconnect ️❌️', callback_data: `disconnect  ${ele.chat_id}` }
                 ]
             )
         });
@@ -420,7 +420,8 @@ bot.on('callback_query', async (ctx) => {
         await db.deleteUserChatStatus({ user_id: ctx.from.id, chat_id: chat_details[1] });
         await db.deleteUserData({ user_id: ctx.from.id, chat_id: chat_details[1] });
 
-        await ctx.editMessageText(`Successfully removed *${chat_details[2]}* from being auto delete messages !!`, {
+        const current_chat_details = ctx.telegram.getChat(parseInt(chat_details[1]));
+        await ctx.editMessageText(`Successfully removed *${current_chat_details.title}* from being auto delete messages !!`, {
             parse_mode: 'markdown',
             reply_markup: {
                 inline_keyboard: [
