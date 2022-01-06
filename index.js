@@ -15,6 +15,21 @@ const client = new Client({
 });
 client.connect();
 
+const express = require('express');
+const app = express();
+
+app.get('/', async (req, res) => {
+    res.send('Welcome !!');
+});
+
+app.listen(process.env.PORT || 5000);
+
+/*
+
+    VARIABLES
+
+*/
+
 var adding_connection = false;
 var updating_timeout = false;
 var allUsersDetails = [];
