@@ -2,8 +2,8 @@ const { Telegraf } = require('telegraf');
 require('dotenv').config();
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-const db = require('./queries');
-const func = require('./functions')
+const db = require('./public/queries');
+const func = require('./public/functions')
 
 const { Client } = require('pg');
 
