@@ -237,7 +237,7 @@ async function deletetionDetails(ctx) {
         ],
         [
             { text: "⏰️ Deletion Time", callback_data: 'no_callback' },
-            { text: currentUser.time_out + ' s', callback_data: `set_timeout  ${current_chat_details.title}  ${current_chat_details.id}` }
+            { text: currentUser.time_out + ' s', callback_data: `set_timeout  ${current_chat_details.id}` }
         ],
         [
             { text: '◀️ Back', callback_data: 'go_back' },
@@ -467,7 +467,9 @@ bot.on('callback_query', async (ctx) => {
         await getCurrentUserDetails(ctx, chat_details[2]);
 
         updating_timeout = true;
-        await ctx.editMessageText(`You're editing configuration of\n*${chat_details[1]} (${chat_details[2]})*\n\n➥ Send new timeout in seconds in reply.`, {
+        const current_chat_details = await ctx.telegram.getChat(parseInt(chat_details[1]));
+        
+        await ctx.editMessageText(`You're editing configuration of\n*${current_chat_details.title} (${chat_details[2]})*\n\n➥ Send new timeout in seconds in reply.`, {
             parse_mode: 'markdown',
             reply_markup: {
                 inline_keyboard: [
