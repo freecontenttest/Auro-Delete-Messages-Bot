@@ -361,7 +361,10 @@ bot.on('callback_query', async (ctx) => {
 
     if (ctx.callbackQuery.data === 'auto_delete') {
         await getCurrentUserDetails(ctx);
-        if (!currentUser.is_enabled) return await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
+        if (!currentUser.is_enabled) {
+            await ctx.telegram.sendMessage(ctx.from.id, 'Seems like your configuration is \'disabled\' or may be pending to setup !!!');
+            return await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
+        }
         
         await db.addUserData({
             user_id: ctx.from.id,
