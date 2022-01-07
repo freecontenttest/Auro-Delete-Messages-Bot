@@ -360,14 +360,14 @@ bot.on('callback_query', async (ctx) => {
     }
 
     if (ctx.callbackQuery.data === 'auto_delete') {
+        await getCurrentUserDetails(ctx);
+        
         await db.addUserData({
             user_id: ctx.from.id,
             chat_id: ctx.chat.id,
             message_id: ctx.callbackQuery.message.message_id,
             created_at: ctx.callbackQuery.message.date
         });
-
-        await getCurrentUserDetails(ctx);
 
         await ctx.editMessageReplyMarkup({
             inline_keyboard: [
