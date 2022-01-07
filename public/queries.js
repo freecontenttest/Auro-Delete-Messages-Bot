@@ -113,6 +113,18 @@ const getUserAllChatData = async (request) => {
     };
 };
 
+const getUserChatDataBy = async (request) => {
+    const get_by = request.get_by;
+    const get_by_value = request.get_by_value;
+    
+    try {
+        response = await pool.query(`SELECT * FROM tg_auto_delete_messages_user_status WHERE ${get_by} = $1`, [get_by_value]);
+        return { data: response.rows, total: response.rows.length };
+    } catch (error) {
+        throw { msg: 'Something Went Wrong !!!', err: error };
+    };
+};
+
 const deleteUserChatStatus = async (request) => {
     const user_id = parseInt(request.user_id);
     const chat_id = Number(request.chat_id);
@@ -142,6 +154,7 @@ module.exports = {
     deleteUserData,
     getUserChatData,
     getUserAllChatData,
+    getUserChatDataBy,
     addUserChatStatus,
     updateUserChatDataBy,
     deleteUserChatStatus
