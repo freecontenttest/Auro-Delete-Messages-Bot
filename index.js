@@ -34,6 +34,7 @@ var adding_connection = false;
 var updating_timeout = false;
 var allUsersDetails = [];
 var hasUsersDetails = false;
+var deletedMessagesInQueue = false;
 var currentUser = {
     id: 0,
     is_enabled: false,
@@ -154,6 +155,39 @@ async function getCurrentUserDetails(ctx, chat_id = null, from_id = null) {
 async function usersDetails(ctx) {
     if (!hasUsersDetails) await getUserDetails(ctx);
     return allUsersDetails;
+};
+
+async function forwardToBinAndDeleteMessage (ctx, chat_id, message_id) {
+    if (process.env.BIN_CHANNEL_ID) {
+        try {
+            await ctx.telegram.forwardMessage(parseInt(process.env.BIN_CHANNEL_ID), chat_id, message_id);
+        } catch (error) {
+            await ctx.telegram.sendMessage(ctx.from.id, `Error In Bin Channel :\n\n${error.description ? error.description : error}`);
+        };
+    }
+    await ctx.telegram.deleteMessage(chat_id, message_id);
+    await db.deleteUserDataByMsgId({ user_id: ctx.from.id, chat_id: chat_id, message_id: message_id });
+};
+
+async function putToBeDeletedMessagesInQueue (ctx) {
+    deletedMessagesInQueue = true;
+    await ctx.reply('Delete messages queue has been established successfully!!!');
+
+    const res = await db.getUserData();
+    if (res.total > 0) {
+        res.data.forEach(ele => {
+            const toBeRemovedTimeStamp = (ele.created_at + Number(ele.message_auto_delete_time));
+            const date1 = new Date(toBeRemovedTimeStamp * 1000);
+            const date2 = new Date((Date.now() / 1000 | 0) * 1000);
+
+            let remaining_time = 0;
+            if (date1 > date2) remaining_time = date1.getTime() - date2.getTime();
+
+            setTimeout(async () => {
+                await forwardToBinAndDeleteMessage(ctx, ele.chat_id, ele.message_id);
+            }, Number(remaining_time));
+        });
+    }
 };
 
 async function showAllConnections(ctx) {
@@ -385,24 +419,7 @@ bot.on('callback_query', async (ctx) => {
             ]
         }).then(() => {
             setTimeout(async () => {
-                if (process.env.BIN_CHANNEL_ID) {
-                    try {
-                        await ctx.telegram.sendCopy(parseInt(process.env.BIN_CHANNEL_ID), ctx.callbackQuery.message, {
-                            reply_markup: {
-                                inline_keyboard: [
-                                    [
-                                        { text: "📂 Back-Up Channel", url: 'https://t.me/joinchat/ojOOaC4tqkU5MTVl' },
-                                        { text: "✨ Other Channels", url: 'https://t.me/my_channels_list_official' },
-                                    ]
-                                ]
-                            }
-                        });
-                    } catch (error) {
-                        await ctx.telegram.sendMessage(ctx.from.id, `Error In Bin Channel :\n\n${error.description ? error.description : error}`);
-                    };
-                }
-                await ctx.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message.message_id);
-                await db.deleteUserDataByMsgId({ user_id: ctx.from.id, chat_id: ctx.chat.id, message_id: ctx.callbackQuery.message.message_id })
+                await forwardToBinAndDeleteMessage(ctx, ctx.chat.id, ctx.callbackQuery.message.message_id);
             }, Number(currentUser.time_out) * 1000);
         });
     }
@@ -518,6 +535,12 @@ bot.command('my_connections', async (ctx) => {
         return await ctx.telegram.sendMessage(ctx.from.id, 'Please change your chat configuration from here by\n/my\_connections command.')
     }
     await showAllConnections(ctx);
+});
+
+bot.command('sche_del_msgs_in_queue', async (ctx) => {
+    if (ctx.chat.type !== 'private') return ctx.reply('Perform this action in bot !!!');
+    if (deletedMessagesInQueue) return ctx.reply('Delete messages queue already has been already established !!!');
+    await putToBeDeletedMessagesInQueue(ctx);
 });
 
 bot.on('channel_post', async (ctx) => {
