@@ -67,7 +67,7 @@ bot.catch(async (err, ctx) => {
 });
 
 bot.use(async (ctx, next) => {
-    if (ctx.callbackQuery && ctx.callbackQuery.data === 'checkTime') return next();
+    if (ctx.callbackQuery && ctx.callbackQuery.data.match(/checkTime(.*)/)) return next();
     const fromId = await func.getFromId(ctx);
     if (!fromId) return;
     if (process.env.SUDO_USERS == fromId) return next();
@@ -130,25 +130,24 @@ async function getUserDetails(ctx, hasReturn = false, from_id = null) {
 
 async function getCurrentUserDetails(ctx, chat_id = null, from_id = null) {
     const user_id = from_id ? parseInt(from_id) : ctx.from.id;
-
     if (!hasUsersDetails) await getUserDetails(ctx, null, user_id);
 
     if (allUsersDetails.length > 0) {
-        allUsersDetails.forEach(user => {
-            if (user.user_id === user_id && parseInt(user.chat_id) === (chat_id ? parseInt(chat_id) : ctx.chat.id)) {
-                currentUser = user;
-            } else {
-                currentUser = {
-                    id: 0,
-                    is_enabled: false,
-                    time_out: 0,
-                    chat_id: 0,
-                    chat_type: '',
-                    chat_title: '',
-                    user_id: 0
-                };
-            }
-        });
+        const isUser = allUsersDetails.find(user => user.user_id === user_id && parseInt(user.chat_id) === (chat_id ? parseInt(chat_id) : ctx.chat.id));
+
+        if (isUser) {
+            currentUser = isUser;
+        } else {
+            currentUser = {
+                id: 0,
+                is_enabled: false,
+                time_out: 0,
+                chat_id: 0,
+                chat_type: '',
+                chat_title: '',
+                user_id: 0
+            };
+        }
     }
 };
 
@@ -373,7 +372,7 @@ bot.on('callback_query', async (ctx) => {
         await ctx.editMessageReplyMarkup({
             inline_keyboard: [
                 [
-                    { text: "Check Time Left ⏰️ To Delete Message 🗑️", callback_data: 'checkTime' }
+                    { text: "Check Time Left ⏰️ To Delete Message 🗑️", callback_data: `checkTime  ${currentUser.time_out}` }
                 ],
                 [
                     { text: "📂 Back-Up Channel", url: 'https://t.me/joinchat/ojOOaC4tqkU5MTVl' },
@@ -420,7 +419,7 @@ bot.on('callback_query', async (ctx) => {
         await db.deleteUserChatStatus({ user_id: ctx.from.id, chat_id: chat_details[1] });
         await db.deleteUserData({ user_id: ctx.from.id, chat_id: chat_details[1] });
 
-        const current_chat_details = ctx.telegram.getChat(parseInt(chat_details[1]));
+        const current_chat_details = await ctx.telegram.getChat(parseInt(chat_details[1]));
         await ctx.editMessageText(`Successfully removed *${current_chat_details.title}* from being auto delete messages !!`, {
             parse_mode: 'markdown',
             reply_markup: {
@@ -434,15 +433,15 @@ bot.on('callback_query', async (ctx) => {
         });
     };
 
-    if (ctx.callbackQuery.data === 'checkTime') {
-        await getCurrentUserDetails(ctx);
+    if (ctx.callbackQuery.data.match(/checkTime(.*)/)) {
+        const time_out = ctx.callbackQuery.data.split('  ')[1];
 
-        const toBeRemovedTimeStamp = (ctx.callbackQuery.message.edit_date + Number(currentUser.time_out));
+        const toBeRemovedTimeStamp = (ctx.callbackQuery.message.edit_date + Number(time_out));
         const date1 = new Date(toBeRemovedTimeStamp * 1000);
         const date2 = new Date((Date.now() / 1000 | 0) * 1000);
 
         if (date1 < date2) {
-            ctx.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message.message_id);
+            await ctx.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message.message_id);
             return await db.deleteUserDataByMsgId({ user_id: ctx.from.id, chat_id: ctx.chat.id, message_id: ctx.callbackQuery.message.message_id })
         }
 
@@ -464,7 +463,7 @@ bot.on('callback_query', async (ctx) => {
 
     if (ctx.callbackQuery.data.match(/set_timeout(.*)/)) {
         const chat_details = ctx.callbackQuery.data.split('  ');
-        await getCurrentUserDetails(ctx, chat_details[2]);
+        await getCurrentUserDetails(ctx, chat_details[1]);
 
         updating_timeout = true;
         const current_chat_details = await ctx.telegram.getChat(parseInt(chat_details[1]));
@@ -498,16 +497,7 @@ bot.command('add_connection', async (ctx) => {
         parse_mode: 'markdown',
         reply_to_message_id: ctx.message.message_id
     });
-
-    if (ctx.chat) {
-        await getCurrentUserDetails(ctx);
-        if (currentUser.chat_id && currentUser.user_id) {
-            return ctx.telegram.editMessageText(ctx.chat.id, (ctx.message.message_id + 1), undefined, `This ${currentUser.chat_type} is already connected.\n\n➥ You can change configuration from bot only.`, {
-                parse_mode: 'markdown'
-            });
-        }
-    }
-
+    
     const chat_type = ctx.message.chat.type === 'supergroup' ? 'supergroup' : 'channel';
     const additional_message = ctx.message.chat.type === 'supergroup' ? '➥ Reply Yes for confirmation & No for cancel the process' : '➥ Send me id of your channel (Ex: -100126256)';
 
@@ -520,7 +510,7 @@ bot.command('add_connection', async (ctx) => {
 
 bot.command('my_connections', async (ctx) => {
     if (ctx.chat.type !== 'private') {
-        ctx.deleteMessage();
+        await ctx.deleteMessage();
         return await ctx.telegram.sendMessage(ctx.from.id, 'Please change your chat configuration from here by\n/my\_connections command.')
     }
     await showAllConnections(ctx);
@@ -565,6 +555,14 @@ bot.on('message', async (ctx) => {
         }
 
         const chat = await ctx.telegram.getChat(parseInt(isChannel ? ctx.message.text : ctx.chat.id));
+        
+        const results = await db.getUserChatDataBy({ get_by: 'chat_id', get_by_value: parseInt(chat.id) });
+        if (results.total) {
+            return ctx.telegram.editMessageText(ctx.chat.id, ctx.message.reply_to_message.message_id, undefined, `*${chat.title}* is already connected.\n\n➥ You can change configuration from bot only.`, {
+                    parse_mode: 'markdown'
+            });
+        }
+        
         await db.addUserChatStatus({ user_id: ctx.from.id, chat_title: chat.title, chat_id: chat.id, chat_type: chat.type, time_out: 60, is_enabled: 1 });
 
         adding_connection = false;
