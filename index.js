@@ -359,7 +359,7 @@ bot.on('callback_query', async (ctx) => {
         await deletetionDetails(ctx);
     }
 
-    if (ctx.callbackQuery.data.match(/auto_delete(.*)/)) {
+    if (ctx.callbackQuery.data === 'auto_delete') {
         await db.addUserData({
             user_id: ctx.from.id,
             chat_id: ctx.chat.id,
@@ -531,7 +531,7 @@ bot.on('channel_post', async (ctx) => {
     await ctx.telegram.editMessageReplyMarkup(ctx.channelPost.chat.id, ctx.channelPost.message_id, undefined, {
         inline_keyboard: [
             [
-                { text: "🗑️ Self Delete", callback_data: `auto_delete ${params.user_id} ${params.message_id} ${params.time_out}` },
+                { text: "🗑️ Self Delete", callback_data: 'auto_delete' },
                 { text: "❌️ Cancel", callback_data: 'do_nothing' }
             ]
         ]
@@ -631,7 +631,7 @@ bot.on('message', async (ctx) => {
         reply_markup: {
             inline_keyboard: [
                 [
-                    { text: "🗑️ Self Delete", callback_data: `auto_delete ${params.user_id} ${params.message_id} ${params.time_out}` },
+                    { text: "🗑️ Self Delete", callback_data: 'auto_delete' },
                     { text: "❌️ Cancel", callback_data: 'do_nothing' }
                 ]
             ]
