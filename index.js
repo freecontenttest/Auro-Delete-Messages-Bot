@@ -300,7 +300,7 @@ async function deletetionDetails(ctx) {
 
 bot.command('create', async (ctx) => {
     if (ctx.chat.type === 'supergroup') return ctx.reply('Perform this action in bot !!!');
-    await client.query('CREATE TABLE tg_auto_delete_messages_data (id SERIAL PRIMARY KEY, user_id INT, chat_id NUMERIC, message_id INT, created_at INT)');
+    await client.query('CREATE TABLE tg_auto_delete_messages_data (id SERIAL PRIMARY KEY, user_id INT, chat_id NUMERIC, message_id INT, created_at INT, message_auto_delete_time INT)');
     ctx.reply('Sucessfully Created !!');
 });
 
@@ -395,6 +395,7 @@ bot.on('callback_query', async (ctx) => {
 
     if (ctx.callbackQuery.data === 'auto_delete') {
         await getCurrentUserDetails(ctx);
+        
         if (!currentUser.is_enabled) {
             await ctx.telegram.sendMessage(ctx.from.id, 'Seems like your configuration is \'disabled\' or may be pending to setup !!!');
             return await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
@@ -404,7 +405,8 @@ bot.on('callback_query', async (ctx) => {
             user_id: ctx.from.id,
             chat_id: ctx.chat.id,
             message_id: ctx.callbackQuery.message.message_id,
-            created_at: ctx.callbackQuery.message.date
+            created_at: ctx.callbackQuery.message.date,
+            message_auto_delete_time: currentUser.time_out
         });
 
         await ctx.editMessageReplyMarkup({
@@ -465,6 +467,8 @@ bot.on('callback_query', async (ctx) => {
             await ctx.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message.message_id);
             return await db.deleteUserDataByMsgId({ user_id: ctx.from.id, chat_id: ctx.chat.id, message_id: ctx.callbackQuery.message.message_id })
         }
+        
+        if (!deletedMessagesInQueue) await putToBeDeletedMessagesInQueue(ctx);
 
         const diff = date1.getTime() - date2.getTime();
 
