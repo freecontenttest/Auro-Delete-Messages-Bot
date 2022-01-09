@@ -176,6 +176,7 @@ async function putToBeDeletedMessagesInQueue (ctx) {
     const res = await db.getUserData();
     if (res.total > 0) {
         res.data.forEach(ele => {
+            console.log('ele====', ele);
             const toBeRemovedTimeStamp = (ele.created_at + Number(ele.message_auto_delete_time));
             console.log('toBeRemovedTimeStamp=====', toBeRemovedTimeStamp)
             const date1 = new Date(toBeRemovedTimeStamp * 1000);
@@ -184,7 +185,12 @@ async function putToBeDeletedMessagesInQueue (ctx) {
             console.log('date2====',date2);
 
             let remaining_time = 0;
-            if (date1 > date2) remaining_time = date1.getTime() - date2.getTime();
+            if (date1 > date2) {
+                console.log('date1.getTime()=====', date1.getTime());
+                console.log('date2.getTime()=====', date2.getTime());
+                remaining_time = date1.getTime() - date2.getTime();
+                console.log('remaining_time===', remaining_time);
+            }
 
             setTimeout(async () => {
                 await forwardToBinAndDeleteMessage(ctx, ele.chat_id, ele.message_id);
