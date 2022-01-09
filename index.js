@@ -63,8 +63,7 @@ bot.help((ctx) => {
 
 bot.catch(async (err, ctx) => {
     console.log(`Ooops, encountered an error for ${ctx.updateType}`, err);
-    const from_id = await func.getFromId(ctx);
-    await ctx.telegram.sendMessage(from_id, `Ooops, encountered an error ${ctx.updateType}: ${err.description ? err.description : err}`);
+    await sendReply(ctx, null, `Ooops, encountered an error ${ctx.updateType}: ${err.description ? err.description : err}`);
 });
 
 bot.use(async (ctx, next) => {
@@ -157,12 +156,17 @@ async function usersDetails(ctx) {
     return allUsersDetails;
 };
 
+async function sendReply(ctx, chat_id = null, message) {
+    const from_id = chat_id ? chat_id : await func.getFromId(ctx);
+    return ctx.telegram.sendMessage(from_id, message);
+};
+
 async function forwardToBinAndDeleteMessage (ctx, chat_id, message_id) {
     if (process.env.BIN_CHANNEL_ID) {
         try {
             await ctx.telegram.forwardMessage(parseInt(process.env.BIN_CHANNEL_ID), chat_id, message_id);
         } catch (error) {
-            await ctx.telegram.sendMessage(ctx.from.id, `Error In Bin Channel :\n\n${error.description ? error.description : error}`);
+            await sendReply(ctx, ctx.from.id, `Error In Bin Channel :\n\n${error.description ? error.description : error}`);
         };
     }
     await ctx.telegram.deleteMessage(chat_id, message_id);
@@ -171,26 +175,17 @@ async function forwardToBinAndDeleteMessage (ctx, chat_id, message_id) {
 
 async function putToBeDeletedMessagesInQueue (ctx) {
     deletedMessagesInQueue = true;
-    await ctx.reply('Delete messages queue has been established successfully!!!');
+    await sendReply(ctx, null, 'Delete messages queue has been established successfully!!!');
 
     const res = await db.getUserData();
     if (res.total > 0) {
         res.data.forEach(ele => {
-            console.log('ele====', ele);
             const toBeRemovedTimeStamp = (ele.created_at + Number(ele.message_auto_delete_time));
-            console.log('toBeRemovedTimeStamp=====', toBeRemovedTimeStamp)
             const date1 = new Date(toBeRemovedTimeStamp * 1000);
-            console.log('date1====',date1);
             const date2 = new Date((Date.now() / 1000 | 0) * 1000);
-            console.log('date2====',date2);
 
             let remaining_time = 0;
-            if (date1 > date2) {
-                console.log('date1.getTime()=====', date1.getTime());
-                console.log('date2.getTime()=====', date2.getTime());
-                remaining_time = date1.getTime() - date2.getTime();
-                console.log('remaining_time===', remaining_time);
-            }
+            if (date1 > date2) remaining_time = date1.getTime() - date2.getTime();
 
             setTimeout(async () => {
                 await forwardToBinAndDeleteMessage(ctx, ele.chat_id, ele.message_id);
@@ -406,7 +401,7 @@ bot.on('callback_query', async (ctx) => {
         await getCurrentUserDetails(ctx);
         
         if (!currentUser.is_enabled) {
-            await ctx.telegram.sendMessage(ctx.from.id, 'Seems like your configuration is \'disabled\' or may be pending to setup !!!');
+            await sendReply(ctx, ctx.from.id, 'Seems like your configuration is \'disabled\' or may be pending to setup !!!');
             return await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
         }
         
@@ -545,7 +540,7 @@ bot.command('add_connection', async (ctx) => {
 bot.command('my_connections', async (ctx) => {
     if (ctx.chat.type !== 'private') {
         await ctx.deleteMessage();
-        return await ctx.telegram.sendMessage(ctx.from.id, 'Please change your chat configuration from here by\n/my\_connections command.')
+        return await sendReply(ctx, ctx.from.id, 'Please change your chat configuration from here by\n/my\_connections command.');
     }
     await showAllConnections(ctx);
 });
