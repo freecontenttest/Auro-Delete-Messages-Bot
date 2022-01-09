@@ -177,8 +177,11 @@ async function putToBeDeletedMessagesInQueue (ctx) {
     if (res.total > 0) {
         res.data.forEach(ele => {
             const toBeRemovedTimeStamp = (ele.created_at + Number(ele.message_auto_delete_time));
+            console.log('toBeRemovedTimeStamp=====', toBeRemovedTimeStamp)
             const date1 = new Date(toBeRemovedTimeStamp * 1000);
+            console.log('date1====',date1);
             const date2 = new Date((Date.now() / 1000 | 0) * 1000);
+            console.log('date2====',date2);
 
             let remaining_time = 0;
             if (date1 > date2) remaining_time = date1.getTime() - date2.getTime();
