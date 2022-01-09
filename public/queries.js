@@ -22,9 +22,10 @@ const addUserData = async (request) => {
     const chat_id = Number(request.chat_id);
     const message_id = parseInt(request.message_id);
     const created_at = parseInt(request.created_at);
+    const message_auto_delete_time = Number(request.message_auto_delete_time || 60);
 
     try {
-        response = await pool.query('INSERT INTO tg_auto_delete_messages_data (user_id, chat_id, message_id, created_at) VALUES ($1, $2, $3, $4)', [user_id, chat_id, message_id, created_at]);
+        response = await pool.query('INSERT INTO tg_auto_delete_messages_data (user_id, chat_id, message_id, created_at, message_auto_delete_time) VALUES ($1, $2, $3, $4, $5)', [user_id, chat_id, message_id, created_at, message_auto_delete_time]);
         return { data: response };
     } catch (error) {
         throw { msg: 'Something Went Wrong !!!', err: error };
