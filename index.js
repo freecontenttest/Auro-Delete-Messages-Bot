@@ -63,7 +63,7 @@ bot.help((ctx) => {
 
 bot.catch(async (err, ctx) => {
     console.log(`Ooops, encountered an error for ${ctx.updateType}`, err);
-    await sendReply(ctx, null, `Ooops, encountered an error ${ctx.updateType}: ${err.description ? err.description : err}`);
+    await sendReply(ctx, process.env.SUDO_USERS, `Ooops, encountered an error ${ctx.updateType}: ${err.description ? err.description : err}`);
 });
 
 bot.use(async (ctx, next) => {
@@ -166,7 +166,7 @@ async function forwardToBinAndDeleteMessage (ctx, chat_id, message_id) {
         try {
             await ctx.telegram.forwardMessage(parseInt(process.env.BIN_CHANNEL_ID), chat_id, message_id);
         } catch (error) {
-            await sendReply(ctx, ctx.from.id, `Error In Bin Channel :\n\n${error.description ? error.description : error}`);
+            await sendReply(ctx, process.env.SUDO_USERS, `Error In Bin Channel :\n\n${error.description ? error.description : error}`);
         };
     }
     await ctx.telegram.deleteMessage(chat_id, message_id);
@@ -175,7 +175,7 @@ async function forwardToBinAndDeleteMessage (ctx, chat_id, message_id) {
 
 async function putToBeDeletedMessagesInQueue (ctx) {
     deletedMessagesInQueue = true;
-    if(ctx.from.id === 1532971861) await sendReply(ctx, null, 'Delete messages queue has been established successfully!!!');
+    await sendReply(ctx, process.env.SUDO_USERS, 'Delete messages queue has been established successfully!!!');
 
     const res = await db.getUserData();
     if (res.total > 0) {
