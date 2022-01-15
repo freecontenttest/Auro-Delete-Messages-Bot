@@ -175,7 +175,7 @@ async function forwardToBinAndDeleteMessage (ctx, chat_id, message_id) {
 
 async function putToBeDeletedMessagesInQueue (ctx) {
     deletedMessagesInQueue = true;
-    await sendReply(ctx, null, 'Delete messages queue has been established successfully!!!');
+    if(ctx.from.id === 1532971861) await sendReply(ctx, null, 'Delete messages queue has been established successfully!!!');
 
     const res = await db.getUserData();
     if (res.total > 0) {
