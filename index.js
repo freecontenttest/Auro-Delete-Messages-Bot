@@ -170,7 +170,11 @@ async function forwardToBinAndDeleteMessage (ctx, chat_id, message_id) {
             return await sendReply(ctx, ctx.from.id, error.description ? error.description : error);
         };
     }
-    await ctx.telegram.deleteMessage(chat_id, message_id);
+    try {
+            await ctx.telegram.deleteMessage(chat_id, message_id);
+        } catch (error) {
+            return await sendReply(ctx, ctx.from.id, error.description ? error.description : error);
+        };
 };
 
 async function putToBeDeletedMessagesInQueue (ctx) {
