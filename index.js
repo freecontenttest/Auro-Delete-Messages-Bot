@@ -167,7 +167,7 @@ async function forwardToBinAndDeleteMessage (ctx, chat_id, message_id) {
             await ctx.telegram.forwardMessage(parseInt(process.env.BIN_CHANNEL_ID), chat_id, message_id),
             await ctx.telegram.deleteMessage(chat_id, message_id)
         ])
-        .catch(error => await sendReply(ctx, ctx.from.id, error.description ? error.description : error))
+        .catch(async(error) => await sendReply(ctx, ctx.from.id, error.description ? error.description : error))
     }
     console.log('ahiya to aave j ho bhai=======');
     await db.deleteUserDataByMsgId({ user_id: ctx.from.id, chat_id: chat_id, message_id: message_id });
