@@ -165,11 +165,11 @@ async function forwardToBinAndDeleteMessage (ctx, chat_id, message_id) {
     if (process.env.BIN_CHANNEL_ID) {
         try {
             await ctx.telegram.forwardMessage(parseInt(process.env.BIN_CHANNEL_ID), chat_id, message_id);
+            await ctx.telegram.deleteMessage(chat_id, message_id);
         } catch (error) {
-            await sendReply(ctx, process.env.SUDO_USERS, `Error In Bin Channel :\n\n${error.description ? error.description : error}`);
+            await sendReply(ctx, process.env.SUDO_USERS, error.description ? error.description : error);
         };
     }
-    await ctx.telegram.deleteMessage(chat_id, message_id);
     await db.deleteUserDataByMsgId({ user_id: ctx.from.id, chat_id: chat_id, message_id: message_id });
 };
 
