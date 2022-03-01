@@ -1,5 +1,11 @@
 require('dotenv').config();
 
+bot.catch(async (err, ctx) => {
+    console.log(`Ooops, encountered an error for ${ctx.updateType}`, err);
+    const chat_id = await getFromId(ctx);
+    ctx.telegram.sendMessage(chat_id, `Ooops, encountered an error ${ctx.updateType}: ${err.description ? err.description : err}`);
+});
+
 const getFromId = async (ctx) => {
     if (ctx.from) {
         return ctx.from.id;
