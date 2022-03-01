@@ -167,6 +167,7 @@ async function forwardToBinAndDeleteMessage (ctx, chat_id, message_id) {
             await ctx.telegram.forwardMessage(parseInt(process.env.BIN_CHANNEL_ID), chat_id, message_id);
             await ctx.telegram.deleteMessage(chat_id, message_id);
         } catch (error) {
+            console.log('error====', error);
             await sendReply(ctx, process.env.SUDO_USERS, error.description ? error.description : error);
         };
     }
