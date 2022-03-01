@@ -170,8 +170,7 @@ async function forwardToBinAndDeleteMessage (ctx, chat_id, message_id) {
             return await sendReply(ctx, ctx.from.id, error.description ? error.description : error);
         };
     }
-    console.log('error==>173');
-//     await ctx.telegram.deleteMessage(chat_id, message_id);
+    await ctx.telegram.deleteMessage(chat_id, message_id);
 };
 
 async function putToBeDeletedMessagesInQueue (ctx) {
@@ -469,8 +468,7 @@ bot.on('callback_query', async (ctx) => {
         const date2 = new Date((Date.now() / 1000 | 0) * 1000);
 
         if (date1 < date2) {
-            console.log('error==>472');
-//             await ctx.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message.message_id);
+            await ctx.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message.message_id);
             return await db.deleteUserDataByMsgId({ user_id: ctx.from.id, chat_id: ctx.chat.id, message_id: ctx.callbackQuery.message.message_id })
         }
         
